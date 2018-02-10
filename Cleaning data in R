@@ -72,9 +72,15 @@ dim(ny_property) #For reference index 31 column is BORO
 #3)Deleting the irrelevant fields as mentioned above
 #after manual counting which index is which field that needs to be deleted.
 
-ny_property_new <- ny_property[,-c(c(2,3,4,6,18,28,29,30))]
+#Delete EXCD1(it is only about 60% populated)
+ny_property_new=ny_property_new[,-c(13)]
 
-str(ny_property_new)
+#Delete AVLAND2,AVTOT2,EXLAND2,EXTOT2,EXCD2
+ny_property_new=ny_property_new[,-c(c(17,18,19,20,21))]
+
+#Delete EXMPTCL (it is only about 2% populated)
+ny_property_new=ny_property_new[,-c(14)]
+
 
 #4)Replace missing values
 
@@ -86,7 +92,7 @@ str(ny_property_new)
 
 #EASEMENT replace all values of duplicate F through M to E
 
-str_replace(c("M,Y"), "E", "%[A")
+ny_property_new$EASEMENT[which(is.na(ny_property_new$EASEMENT))] <- "NO"
 
 missing_values <- sapply(ny_property_new, function(x) sum(is.na(x)))
 missing_values
