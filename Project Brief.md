@@ -39,3 +39,11 @@ Steps in detail:
 7. Examine top records
 9. Write report
 
+*About "Fill In Missing Fields"
+For the three values, when they are missing we want to fill in with innocuous values that won’t set off the alarm. 
+Use the field averages, and you can group by any entity you think makes sense.
+For the other fields we need to scale (LTFRONT, LTDEPTH, STORIES, BLDFRONT, BLDDEPTH), 
+fill in with values that make sense. You can use whatever logic you want, for example:
+If LTFRONT=LTDEPTH=0, set them to (30, 100)
+If BLDFRONT=BLDDEPTH=0, set them to (20, 40) 
+If STORIES=0, set it to average stories by zip code, borough, TAXCLASS, or some other entity.
