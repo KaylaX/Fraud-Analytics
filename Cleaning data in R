@@ -80,7 +80,9 @@ ny_property_new=ny_property_new[,-c(c(17,18,19,20,21))]
 ny_property_new=ny_property_new[,-c(14)]
 
 
-#4)Replace missing values: EASEMENT,ZIP,STORIES
+#4)Replace missing values: 
+#NA:EASEMENT,ZIP,STORIES
+#Zeros:LTFRONT.LTDEPTH,AVLAND,AVTOT,
 
 #1- EASEMENT
 
@@ -204,7 +206,7 @@ ny_property_new1 <- ny_property_new %>%
 missing_values <- sapply(ny_property_new1, function(x) sum(is.na(x)))
 missing_values
 
-
+#4- LTFRONT, LTDEPTH
 #replacing zeros by NA 
 is.na(ny_property_new1$LTFRONT) <- !ny_property_new1$LTFRONT
 is.na(ny_property_new1$LTDEPTH) <- !ny_property_new1$LTDEPTH
@@ -333,7 +335,7 @@ ny_property_new2 <- ny_property_new2 %>%
          BLDDEPTH = replace(BLDDEPTH, is.na(BLDDEPTH), round(mean(BLDDEPTH, na.rm = T))))
 
 
-## MISSING VALUES FOR  FULLVAL, AVLAND, AVTOT 
+#5- FULLVAL, AVLAND, AVTOT 
 #lets replace all zeros by NAs for data cleaning purposes
 
 is.na(ny_property_new2$FULLVAL) <- !ny_property_new2$FULLVAL
@@ -416,7 +418,6 @@ str(ny_property_clean)
 
 
 #EXLAND , EXTOT both have zeros values lets transform zeros to NAs and fill them by their average value by ZIP
-
 
 ny_property_clean$EXLAND = ifelse(ny_property_clean$EXLAND == 0, NA, ny_property_clean$EXLAND)
 
