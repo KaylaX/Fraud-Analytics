@@ -16,7 +16,7 @@ In this project, we built an unsupervised fraud model for the NY property data.
 
 Using proper methodology, we did data cleaning, constructed variables and built algorithm.
 
-Steps:
+Steps in detail:
 1. Build ~50 “expert variables” by various scalings of the three value fields FULLVAL, AVLAND, AVTOT
 
     - Create these 3 sizes
