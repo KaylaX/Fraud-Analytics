@@ -16,4 +16,15 @@ In this project, we built an unsupervised fraud model for the NY property data.
 
 Using proper methodology, we did data cleaning, constructed variables and built algorithm.
 
+Steps:
+1. Build ~50 “expert variables” by various scalings of the three value fields FULLVAL, AVLAND, AVTOT
+2. Z-scale all variables
+3. Perform PCA, keep the top 6 – 8 PC’s
+4. Z-scale again
+5. Build two separate fraud algorithms:
+- Outlier detection via z-scores
+- Autoencoder error
+6. Combine scores via weighted quantile-scaled scores
+7. Examine top records
+9. Write report
 
