@@ -16,7 +16,7 @@ setwd("~/Desktop/DSO 562 Fraud Analytics/Week 2")
 
 ny_property <- read_excel("NY property 1 million.xlsx")
 
-#1)
+#1)counting missing values and unique values
 #counting missing values
 missing_values <- sapply(ny_property, function(x) sum(is.na(x)))
 missing_values
@@ -28,7 +28,7 @@ unique_values
 str(ny_property)
 
 #get rid of non-numerical fields that dont make sense 
-#( not interesting for fraud, not valuable, not informatives) 
+#(not interesting for fraud, not valuable, not informatives) 
 #in order to perform the data cleaning
 
 # According to the data dictionary, BBLE, BLOCK, LOT are all unique numerical values. 
@@ -49,8 +49,8 @@ str(ny_property)
 #all have the same value for each obversation
 # they should all be deleted.
 
-#STADDR are street names, missing values of street names do not mean they dont have a street, it is just unknown so
-# we would need only the ZIP code to have a geographical field. 
+#STADDR are street names, missing values of street names do not mean they dont have a street, 
+#it is just unknown so we would need only the ZIP code to have a geographical field. 
 #We can use STADDR to look up the zipcodes that are missing.
 
 #OWNER is not a numerical value. 
@@ -63,13 +63,13 @@ str(ny_property)
 View(ny_property)
 str_extract(ny_property$BBLE, "[0-9]")
 
-#2)creating a "BORO" column
+#2)Creating a "BORO" column by extracting the first number from "BBLE"
 ny_property <- ny_property %>%
                   mutate(BORO = str_extract(ny_property$BBLE, "[0-9]"))
 
 dim(ny_property) #For reference index 31 column is BORO
 
-#3)Delete the field as mentioned above
+#3)Deleting the irrelevant fields as mentioned above
 #after manual counting which index is which field that needs to be deleted.
 
 ny_property_new <- ny_property[,-c(c(2,3,4,6,18,28,29,30))]
@@ -77,6 +77,8 @@ ny_property_new <- ny_property[,-c(c(2,3,4,6,18,28,29,30))]
 str(ny_property_new)
 
 #4)Replace missing values
+
+#EASEMENT
 
 #EASEMENT is a categorical field 
 #but missing values means they are just no easement. 
@@ -86,20 +88,15 @@ str(ny_property_new)
 
 str_replace(c("M,Y"), "E", "%[A")
 
-ny_property_new$EASEMENT[which(is.na(ny_property_new$EASEMENT))] <- "NO"
-#just to see if all the missing values of EASEMENT have been replaced
-sum(is.na(ny_property$EASEMENT))
-
-sum(ny_property_new$EASEMENT == "NO") 
-#They both match so all the missing values have been replaced
-
 missing_values <- sapply(ny_property_new, function(x) sum(is.na(x)))
 missing_values
 
+#ZIP
 
 #ZIP has 26356 missing values. 
-#replace the missing values by looking up the street address
-#using ggmap and manual filling in
+#Replace the missing values by looking up the street address using ggmap and manual filling
+#The zips that cannot be found by street address (since they are blank or incomplete) are
+#replaced by the most frequent zip by BORO.
 
 geocodeAdddress <- function(address) {
   require(RJSONIO)
@@ -116,8 +113,6 @@ geocodeAdddress <- function(address) {
   out
 }
 
-
-
 geocodeAdddress('COYLE STREET, NEW YORK')
 
 STADDRBORO <- read_xlsx("STADDRBORO1.xlsx")
@@ -129,7 +124,7 @@ locations_data <- do.call(rbind.data.frame, locations)
 
 locations_data1 <- bind_cols(STADDRBORO, locations_data)
 
-#get zip now
+#get zip
 
 latlon2zip <- function(lat, lon) {
   url <- sprintf("http://nominatim.openstreetmap.org/reverse?format=json&lat=%f&lon=%f&zoom=18&addressdetails=1", lat, lon)
