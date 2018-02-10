@@ -60,8 +60,6 @@ str(ny_property)
 
 
 #Before deleting BBLE, BLOCK, LOT. Lets add BORO
-View(ny_property)
-str_extract(ny_property$BBLE, "[0-9]")
 
 #2)Creating a "BORO" column by extracting the first number from "BBLE"
 ny_property <- ny_property %>%
@@ -82,9 +80,9 @@ ny_property_new=ny_property_new[,-c(c(17,18,19,20,21))]
 ny_property_new=ny_property_new[,-c(14)]
 
 
-#4)Replace missing values
+#4)Replace missing values: EASEMENT,ZIP,STORIES
 
-#EASEMENT
+#1- EASEMENT
 
 #EASEMENT is a categorical field 
 #but missing values means they are just no easement. 
@@ -97,7 +95,7 @@ ny_property_new$EASEMENT[which(is.na(ny_property_new$EASEMENT))] <- "NO"
 missing_values <- sapply(ny_property_new, function(x) sum(is.na(x)))
 missing_values
 
-#ZIP
+#2- ZIP
 
 #ZIP has 26356 missing values. 
 #Replace the missing values by looking up the street address using ggmap and manual filling
@@ -130,7 +128,7 @@ locations_data <- do.call(rbind.data.frame, locations)
 
 locations_data1 <- bind_cols(STADDRBORO, locations_data)
 
-#get zip
+#Get zip
 
 latlon2zip <- function(lat, lon) {
   url <- sprintf("http://nominatim.openstreetmap.org/reverse?format=json&lat=%f&lon=%f&zoom=18&addressdetails=1", lat, lon)
@@ -145,6 +143,7 @@ lonlat_sample <- geocode(STADDRBORO$STADDRBORO)
 res <- revgeocode(lonlat_sample, output="more")
 res
 
+#3- STORIES
 #STORIES have 52142 missing values
 
 #One way to replace those values is to 
@@ -162,7 +161,7 @@ zip_stories <- ny_property_new %>%
 
 range(zip_stories$avg_stories) 
 #We can see that the average values go from 1 to 66.3 
-#(thats an extreme range)
+#(that's an extreme range)
 
 #group by EASEMENT
 
@@ -195,7 +194,6 @@ range(bldgcl_stories$avg_stories) #The average values range go from 1 to 36
 
 #Decision: we can either replace the stories missing values by the mean dependent on TAXCLASS or BLDGCL. Lets go by TAXCLASS
 #since the range is not too small but also not too big
-
 
 
 ny_property_new1 <- ny_property_new %>%
@@ -526,10 +524,4 @@ bldgcl_mean=ny_property_clean %>%
             LOTAREA = mean(LOTAREA),
             BLDAREA = mean(BLDAREA),
             BLDVOL = mean(BLDVOL))
-
-ny_property_clean$EXLAND
-
-str(ny_property)
-str(ny_property_clean1)
-
-missing_values
+            
