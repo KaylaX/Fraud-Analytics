@@ -144,3 +144,392 @@ lonlat_sample <- geocode(STADDRBORO$STADDRBORO)
 
 res <- revgeocode(lonlat_sample, output="more")
 res
+
+#STORIES have 52142 missing values
+
+#One way to replace those values is to 
+#insert the mean by ZIP, EASEMENT, TAXCLASS, BLDGCL 
+#(all those fields have no missing values)
+#We want average values by those fields to be a small range otherwise our variation spread will be too large which 
+# could potentially make our predictive analysis wrong cause more errors.
+
+#group by ZIP
+
+zip_stories <- ny_property_new %>%
+  filter(!is.na(STORIES)) %>%
+  group_by(ZIP) %>%
+  summarise(avg_stories = mean(STORIES), count = n())
+
+range(zip_stories$avg_stories) 
+#We can see that the average values go from 1 to 66.3 
+#(thats an extreme range)
+
+#group by EASEMENT
+
+easement_stories <- ny_property_new %>%
+  filter(!is.na(STORIES)) %>%
+  group_by(EASEMENT) %>%
+  summarise(avg_stories = mean(STORIES), count = n())
+
+range(easement_stories$avg_stories) 
+#The average values go from 1 to 6. That could be a bit too small, not enough variation
+
+#group by TAXCLASS
+
+taxclass_stories <- ny_property_new %>%
+  filter(!is.na(STORIES)) %>%
+  group_by(TAXCLASS) %>%
+  summarise(avg_stories = mean(STORIES), count = n())
+
+range(taxclass_stories$avg_stories) 
+#The average values go from 1 to 16.
+
+#group by BLDGCL
+
+bldgcl_stories <- ny_property_new %>%
+  filter(!is.na(STORIES)) %>%
+  group_by(BLDGCL) %>%
+  summarise(avg_stories = mean(STORIES), count = n())
+
+range(bldgcl_stories$avg_stories) #The average values range go from 1 to 36
+
+#Decision: we can either replace the stories missing values by the mean dependent on TAXCLASS or BLDGCL. Lets go by TAXCLASS
+#since the range is not too small but also not too big
+
+
+
+ny_property_new1 <- ny_property_new %>%
+                      group_by(TAXCLASS) %>%
+                      mutate(STORIES = replace(STORIES, is.na(STORIES), round(mean(STORIES, na.rm = T))))
+
+
+missing_values <- sapply(ny_property_new1, function(x) sum(is.na(x)))
+missing_values
+
+
+#replacing zeros by NA 
+is.na(ny_property_new1$LTFRONT) <- !ny_property_new1$LTFRONT
+is.na(ny_property_new1$LTDEPTH) <- !ny_property_new1$LTDEPTH
+
+#LTFRONT
+
+#group by BLDGCL
+bldgcl_ltfront <- ny_property_new1 %>%
+  filter(!is.na(LTFRONT)) %>%
+  group_by(BLDGCL) %>%
+  summarise(avg_ltfront= mean(LTFRONT), count = n())
+
+range(bldgcl_ltfront$avg_ltfront) #avg range from 20.2 to 3550. Not good
+
+#group by ZIP
+
+zip_ltfront <- ny_property_new1 %>%
+  filter(!is.na(LTFRONT)) %>%
+  group_by(ZIP) %>%
+  summarise(avg_ltfront = mean(LTFRONT), count = n())
+
+range(zip_ltfront$avg_ltfront) #avg range from 15 to 2000
+
+#group by taxclass
+
+taxclass_ltfront <- ny_property_new1 %>%
+  filter(!is.na(LTFRONT)) %>%
+  group_by(TAXCLASS) %>%
+  summarise(avg_ltfront = mean(LTFRONT), count = n())
+
+range(taxclass_ltfront$avg_ltfront) # avg range from 25.9 to 338
+
+#group by EASEMENT
+
+easement_ltfront <- ny_property_new1 %>%
+  filter(!is.na(LTFRONT)) %>%
+  group_by(EASEMENT) %>%
+  summarise(avg_ltfront = mean(LTFRONT), count = n())
+
+range(easement_ltfront$avg_ltfront) # avg range from 12.5 to 259
+
+#group by boro
+
+boro_ltfront <- ny_property_new1 %>%
+  filter(!is.na(LTFRONT)) %>%
+  group_by(BORO) %>%
+  summarise(avg_ltfront = mean(LTFRONT), count = n())
+
+range(boro_ltfront$avg_ltfront) # avg range from 33.45 to 81.43 
+
+# since LTFRONT and LTDEPTH have the same range (0,9999) lets group them by boro
+
+boro_ltdepth <- ny_property_new1 %>%
+  filter(!is.na(LTDEPTH)) %>%
+  group_by(BORO) %>%
+  summarise(avg_ltdepth = mean(LTDEPTH), count = n())
+
+range(boro_ltdepth$avg_ltdepth) # avg range from 101 to 120
+
+
+# MISSING VALUES FOR LTFRONT AND LTDEPTH Lets replace LTFRONT and LTDEPTH missing values of 0 by the mean grouping by BORO
+
+#replacing zeros by NA 
+is.na(ny_property_new1$LTFRONT) <- !ny_property_new1$LTFRONT
+is.na(ny_property_new1$LTDEPTH) <- !ny_property_new1$LTDEPTH
+
+
+ny_property_new2 <- ny_property_new1 %>%
+  group_by(BORO) %>%
+  mutate(LTFRONT = replace(LTFRONT, is.na(LTFRONT), round(mean(LTFRONT, na.rm = T))),
+         LTDEPTH = replace(LTDEPTH, is.na(LTDEPTH), round(mean(LTDEPTH, na.rm = T))))
+
+ny_property_new1$LTFRONT
+ny_property_new2$LTFRONT
+
+ny_property_new1$LTDEPTH
+ny_property_new2$LTDEPTH
+
+#MISSING VALUES FOR BLDFRONT and BLDEPTH they have similar range
+
+range(ny_property_new2$BLDDEPTH)
+range(ny_property_new2$BLDFRONT)
+
+#replace zeros by missing values 
+is.na(ny_property_new2$BLDFRONT) <- !ny_property_new2$BLDFRONT
+is.na(ny_property_new2$BLDDEPTH) <- !ny_property_new2$BLDDEPTH
+
+
+#group by boro to see the range of the mean
+boro_bldfront <- ny_property_new2 %>%
+  filter(!is.na(BLDFRONT)) %>%
+  group_by(BORO) %>%
+  summarise(avg_bldfront= mean(BLDFRONT), count = n())
+
+range(boro_bldfront$avg_bldfront) # range average go from 24 to 70
+
+
+
+boro_blddepth<- ny_property_new2 %>%
+  filter(!is.na(BLDDEPTH)) %>%
+  group_by(BORO) %>%
+  summarise(avg_blddepth= mean(BLDDEPTH), count = n())
+
+range(boro_blddepth$avg_blddepth) # range average go from 40 to 102.40
+
+#lets try by taxclass
+taxclass_bldfront <- ny_property_new2 %>%
+  filter(!is.na(BLDFRONT)) %>%
+  group_by(TAXCLASS) %>%
+  summarise(avg_bldfront= mean(BLDFRONT), count = n())
+
+range(taxclass_bldfront$avg_bldfront) # range from 19.33 to 92
+
+taxclass_blddepth <- ny_property_new2 %>%
+  filter(!is.na(BLDDEPTH)) %>%
+  group_by(TAXCLASS) %>%
+  summarise(avg_blddepth= mean(BLDDEPTH), count = n())
+
+range(taxclass_blddepth$avg_blddepth) # range from 33.75 to 108.01
+
+#For the purpose of being consistent lets replace missing values of BLDDEPTH and BLDFRONT by the group BORO
+
+ny_property_new2 <- ny_property_new2 %>%
+  group_by(BORO) %>%
+  mutate(BLDFRONT = replace(BLDFRONT, is.na(BLDFRONT), round(mean(BLDFRONT, na.rm = T))),
+         BLDDEPTH = replace(BLDDEPTH, is.na(BLDDEPTH), round(mean(BLDDEPTH, na.rm = T))))
+
+
+## MISSING VALUES FOR  FULLVAL, AVLAND, AVTOT 
+#lets replace all zeros by NAs for data cleaning purposes
+
+is.na(ny_property_new2$FULLVAL) <- !ny_property_new2$FULLVAL
+is.na(ny_property_new2$AVLAND) <- !ny_property_new2$AVLAND
+is.na(ny_property_new2$AVTOT) <- !ny_property_new2$AVTOT
+
+
+
+missing_values <- sapply(ny_property_new2, function(x) sum(is.na(x)))
+missing_values
+
+#for FULLVAL, AVTOT, AVLAND it makes more sense to group them by ZIP 
+# because in a zip code area, we usually have a neighborhood with similar property values especially in NY ( Manhattan, Brooklyn)
+
+#check the range first by ZIP
+
+zip_fullval <- ny_property_new2 %>%
+  filter(!is.na(FULLVAL)) %>%
+  group_by(ZIP) %>%
+  summarise(avg_fullval= mean(FULLVAL), count = n())
+
+range(zip_fullval$avg_fullval) # FULLVAL average range from 197,248.2 to 378,000,000
+
+zip_avtot <- ny_property_new2 %>%
+  filter(!is.na(AVTOT)) %>%
+  group_by(ZIP) %>%
+  summarise(avg_avtot= mean(AVTOT), count = n())
+
+range(zip_avtot$avg_avtot) # AVTOT average range from  25423.67 to 170100000.00
+
+
+zip_avland <- ny_property_new2 %>%
+  filter(!is.na(AVLAND)) %>%
+  group_by(ZIP) %>%
+  summarise(avg_avland= mean(AVLAND), count = n())
+
+range(zip_avland$avg_avland) # AVLAND average range from  10524.36 to 47700000
+
+#replace missing values by their average based on ZIP
+
+ny_property_new2 <- ny_property_new2 %>%
+  group_by(ZIP) %>%
+  mutate(FULLVAL = replace(FULLVAL, is.na(FULLVAL), mean(FULLVAL, na.rm = T)),
+         AVTOT = replace(AVTOT, is.na(AVTOT), mean(AVTOT, na.rm = T)),
+         AVLAND = replace(AVLAND, is.na(AVLAND), mean(AVLAND, na.rm = T)))
+
+range(ny_property_new2$FULLVAL)
+range(ny_property_new2$AVTOT)
+range(ny_property_new2$AVLAND)
+
+#There is some very unusual small values from FULLVAL, AVTOT, AVLAND
+
+missing_values
+
+#Most values of AVLAND2 are lower than AVLAND. AVLAND2 could be updated values of AVLAND
+#Most AVTOT2 values are smaller than  AVTOT. AVTOT2 could be updated values of AVTOT
+#Most EXLAND2 values are lower than EXLAND . EXLAND2 could be updated values of EXLAND
+# Most EXTOT2 values are lower than EXTOT. EXTOT2 could be updated values of EXTOT
+#We potentially dont need them lets delete them
+
+
+
+#If we remove EXLAND2 we dont need EXCD2 because it is the exempt code updated version of the EXLAND2
+
+drops <- c('AVLAND2', 'AVTOT2', 'EXLAND2', 'EXTOT2', 'EXCD2','EXTOT2')
+
+
+ny_property_new2[, !names(ny_property_new2) %in% drops]
+
+ny_property_clean <- ny_property_new2[, !names(ny_property_new2) %in% drops]
+
+#EXMPTCL doesnt really show any fraud indication nor does it show anyting interesting in its value except that it has 1033583 missing values
+#lets delete
+dim(ny_property_clean)
+ny_property_clean <- ny_property_clean[,-15]
+
+missing_values <- sapply(ny_property_clean, function(x) sum(is.na(x)))
+missing_values
+str(ny_property_clean)
+
+
+#EXLAND , EXTOT both have zeros values lets transform zeros to NAs and fill them by their average value by ZIP
+
+
+ny_property_clean$EXLAND = ifelse(ny_property_clean$EXLAND == 0, NA, ny_property_clean$EXLAND)
+
+
+ny_property_clean$EXTOT  = ifelse(ny_property_clean$EXTOT == 0, NA, ny_property_clean$EXTOT)
+
+imputeEXLAND <- function(DF, i){
+  value <- DF$ZIP == DF$ZIP[i]
+  imputed <- mean(DF$EXLAND[value], na.rm = T)
+  if (is.nan(imputed)) {
+    imputed <- NA
+  }
+  return(imputed)
+}         
+         
+
+for (i_missing in which(is.na(ny_property_clean$EXLAND))){
+  ny_property_clean$EXLAND[i_missing] <- imputeEXLAND(ny_property_clean, i_missing)
+}
+
+
+
+
+ny_property_clean <- ny_property_clean %>%
+  group_by(ZIP) %>%
+  mutate(EXLAND = replace(EXLAND, is.na(EXLAND), median(EXLAND, na.rm = T)),
+         EXTOT = replace(EXTOT, is.na(EXTOT), median(EXTOT, na.rm = T)))
+
+
+
+
+#After cleaning the data, Project 1 Creating variables, 
+
+# lotarea
+
+ny_property_clean$LOTAREA <- ny_property_clean$LTFRONT * ny_property_clean$LTDEPTH
+
+# bldarea
+
+ny_property_clean$BLDAREA <- ny_property_clean$BLDFRONT * ny_property_clean$BLDDEPTH
+
+# bldvol
+ny_property_clean$BLDVOL <- ny_property_clean$BLDAREA * ny_property_clean$STORIES
+
+str(ny_property_clean)
+
+#Lets create all the mean of 9 numerical variables grouped by 5 group total to have 45 variables
+
+#group by 5 variables: EASEMENT, TAXCLASS, ZIP, BORO, BLDGCL 
+
+
+
+easement_mean=ny_property_clean %>%  
+  group_by(EASEMENT) %>%  
+  summarise(FULLVAL= mean(FULLVAL),
+            AVLAND= mean(AVLAND),
+            AVTOT = mean(AVTOT),
+            EXLAND = mean(EXLAND),
+            EXTOT = mean(EXTOT),
+            LOTAREA = mean(LOTAREA),
+            BLDAREA = mean(BLDAREA),
+            BLDVOL = mean(BLDVOL))
+
+taxclass_mean=ny_property_clean %>%  
+  group_by(TAXCLASS) %>%  
+  summarise(FULLVAL = mean(FULLVAL),
+            AVLAND = mean(AVLAND),
+            AVTOT = mean(AVTOT),
+            EXLAND = mean(EXLAND),
+            EXTOT = mean(EXTOT),
+            LOTAREA = mean(LOTAREA),
+            BLDAREA = mean(BLDAREA),
+            BLDVOL = mean(BLDVOL))
+
+
+zip_mean=ny_property_clean %>%  
+  group_by(ZIP) %>%  
+  summarise(FULLVAL = mean(FULLVAL),
+            AVLAND = mean(AVLAND),
+            AVTOT = mean(AVTOT),
+            EXLAND = mean(EXLAND),
+            EXTOT = mean(EXTOT),
+            LOTAREA = mean(LOTAREA),
+            BLDAREA = mean(BLDAREA),
+            BLDVOL = mean(BLDVOL))
+
+boro_mean <- ny_property_clean %>%
+  group_by(BORO) %>%  
+  summarise(FULLVAL = mean(FULLVAL),
+            AVLAND = mean(AVLAND),
+            AVTOT = mean(AVTOT),
+            EXLAND = mean(EXLAND),
+            EXTOT = mean(EXTOT),
+            LOTAREA = mean(LOTAREA),
+            BLDAREA = mean(BLDAREA),
+            BLDVOL = mean(BLDVOL))
+
+bldgcl_mean=ny_property_clean %>%  
+  group_by(BLDGCL) %>%  
+  summarise(FULLVAL = mean(FULLVAL),
+            AVLAND = mean(AVLAND),
+            AVTOT = mean(AVTOT),
+            EXLAND = mean(EXLAND),
+            EXTOT = mean(EXTOT),
+            LOTAREA = mean(LOTAREA),
+            BLDAREA = mean(BLDAREA),
+            BLDVOL = mean(BLDVOL))
+
+ny_property_clean$EXLAND
+
+str(ny_property)
+str(ny_property_clean1)
+
+missing_values
