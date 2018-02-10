@@ -81,8 +81,8 @@ ny_property_new=ny_property_new[,-c(14)]
 
 
 #4)Replace missing values: 
-#NA:EASEMENT,ZIP,STORIES
-#Zeros:LTFRONT.LTDEPTH,AVLAND,AVTOT,
+#NA:EASEMENT, ZIP, STORIES
+#Zeros:LTFRONT, LTDEPTH, FULLVAL, AVLAND, AVTOT 
 
 #1- EASEMENT
 
