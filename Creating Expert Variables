@@ -1,3 +1,6 @@
+#Highlights:
+#Conudcting PCA using prcomp function
+
 library(ggplot2)
 library(dplyr)
 library(scales)
@@ -99,7 +102,7 @@ data_pca_merge$Var39 = ny_property_merge$AVLAND_BLDAREA / ny_property_merge$ALL_
 data_pca_merge$Var38 = ny_property_merge$AVLAND_LOTAREA / ny_property_merge$ALL_AVLAND_LOTAREA_MEAN  
 data_pca_merge$Var37 = ny_property_merge$AVLAND_BLDVOL / ny_property_merge$ALL_AVLAND_BLDVOL_MEAN  
 
-#More expert to reah a total of 51
+#More expert to reach a total of 51
 
 data_pca_merge$Var46 = ny_property_merge$FULLVAL/ny_property_merge$ZIP_FULLVAL_MEAN
 data_pca_merge$Var47 = ny_property_merge$AVTOT/ny_property_merge$ZIP_AVTOT_MEAN
@@ -114,10 +117,7 @@ View(data_pca_merge)
 write.csv(data_pca_merge, 'data_pca_merge.csv')
 
 
-###Additional expert variables that we dont need (or maybe need later) :  cmd shift C
-
-
-
+###Additional expert variables that we dont need (or may need later) :  cmd shift C
 # Var4 = ny_merge$FULLVAL/ny_merge$TAXCLASS_FULLVAL_MEAN
 # Var5 = ny_merge$FULLVAL/ny_merge$ZIP3_FULLVAL_MEAN
 # Var4 = ny_merge$FULLVAL/ny_merge$BORO_FULLVAL_MEAN
@@ -202,7 +202,7 @@ data_pca_z[] <- lapply(data_pca_merge, function(x) if(is.numeric(x)){
 data_pca_z_input <- data_pca_z
 
 
-#PArt 3 reducing dimensionality through prcomp function
+#PART 3 reducing dimensionality through prcomp function
 ?prcomp
 data_pca_result <- prcomp(data_pca_z_input, scale. = T)
 
@@ -243,9 +243,7 @@ new_data_pca_result <- data_pca_result_merge[, c(1:8)] #keeping only the top 8 w
 
 #Check if they match
 
-#Part 4 z scale the reduced variable( the PCs) from the top 8 PCs
-
-
+#Part 4 z scale the reduced variable(the PCs) from the top 8 PCs
 
 new_data_pca_result_z = new_data_pca_result
 for ( i in 1:ncol(new_data_pca_result_z)) {
@@ -265,7 +263,6 @@ write.csv(new_data_pca_result_z , 'new_data_pca_result_z.csv')
 
 #Part 5 Fraud score Calculation
 
-
 #First score function
 
 # For fraud purposes m = 2
@@ -273,8 +270,6 @@ write.csv(new_data_pca_result_z , 'new_data_pca_result_z.csv')
 m = 2
 
 str(new_data_pca_result_z)
-
-
 
 str(new_data_pca_result_z)
 
@@ -287,8 +282,6 @@ fraud_score1 <- data.frame(fraud_score1)
 
 View(fraud_score1)
 summary(fraud_score1)
-
-
 
 fraud_score2 <- (fraud_score1 - min(fraud_score1)) / (max(fraud_score1)  - min(fraud_score1))
 
