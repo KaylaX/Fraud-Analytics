@@ -16,6 +16,7 @@ setwd("~/Desktop/DSO 562 Fraud Analytics/Data")
 ny_merge = read.csv("ny_property_merge.csv")
 
 ##Create Expert Variables 
+#FULLVAL_BLDAREA means FULLVAL/BLDAREA (normalization)
 
 #FULLVAL and ZIP
 
