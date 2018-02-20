@@ -1,0 +1,79 @@
+###comparing the two scores: fraud_score11 and autoencoder_fraudscore2. lets compare the top 20 records 
+
+
+# First Fraud Score 
+outlierdetection_fraudscore11 <- data.frame(cbind(record_id=row.names(fraud_score11_autoencoder),fraud_score11_autoencoder))
+outlierdetection_fraudscore11_top20 <- outlierdetection_fraudscore11 %>%
+                                        arrange(-fraud_score11) %>%
+                                        slice(1:20)
+
+# Second Fraud Score 
+autoencoder_fraudscore2_dataframe <- data.frame(cbind(record_id=row.names(autoencoder_fraudscore2),autoencoder_fraudscore2))
+autoencoder_fraudscore2_top20 <- autoencoder_fraudscore2_dataframe %>%
+                                  arrange(-autoencoder_fraudscore) %>%
+                                  slice(1:20)
+
+
+# CHANGING PARAMETERS #### 
+
+library(autoencoder)
+# Set up the autoencoder architecture:
+nl=3                          ## number of layers (default is 3: input, hidden, output)
+unit.type = "logistic"        ## specify the network unit type, i.e., the unit
+
+# activation function ("logistic" or "tanh")
+Nx.patch=10                   ## width of training image patches, in pixels
+Ny.patch=10                   ## height of training image patches, in pixels
+N.input = Nx.patch*Ny.patch  ## number of units (neurons) in the input layer (one unit per pixel)
+N.hidden = 5              ## number of units in the hidden layer CHANGE TO 10, 5
+lambda = 0.0002               ## weight decay parameter
+beta = 6                      ## weight of sparsity penalty term
+rho = 0.01                    ## desired sparsity parameter
+epsilon <- 0.001              ## a small parameter for initialization of weights
+# as small gaussian random numbers sampled from N(0,epsilon^2)
+max.iterations = 100         ## number of iterations in optimizer  CHANGE TO #100
+
+data_pca_scores22 <- as.matrix(data_pca_scores2)
+
+autoencoder.object11 <- autoencode(X.train=data_pca_scores22,nl=nl,N.hidden=N.hidden,
+                                 unit.type=unit.type,lambda=lambda,beta=beta,rho=rho,epsilon=epsilon,
+                                 optim.method="BFGS",max.iterations=max.iterations,
+                                 rescale.flag=TRUE,rescaling.offset=0.001) #If you run, know that it will take a long time ( ~6-8hours)
+
+autoencoder_output11 <- predict(autoencoder.object11, X.input=data_pca_scores22, hidden.output=FALSE)$X.output
+
+m = 2
+?predict()
+
+autoencoder_dist11 <- abs(autoencoder_output11 - data_pca_scores22)^m
+
+autoencoder_fraudscore11 <- apply(autoencoder_dist11, 1, sum)^(1/m)
+
+autoencoder_fraudscore11 <- data.frame(autoencoder_fraudscore)
+
+summary(autoencoder_fraudscore11)
+
+
+#rescaling it for range 0 to 1
+autoencoder_fraudscore22 <- (autoencoder_fraudscore11 - min(autoencoder_fraudscore11)) / (max(autoencoder_fraudscore11)  - min(autoencoder_fraudscore11))
+
+
+summary(autoencoder_fraudscore22)
+ggplot(data = autoencoder_fraudscore2, aes(x = autoencoder_fraudscore2)) +
+  geom_histogram(bins = 100, fill = "dodgerblue3" , col = "black") +
+  ggtitle("Autoencoder 22 Error: Fraud Score of Autoencoder") +
+  xlab("Fraud Score") +
+  ylab("count") +
+  theme(plot.title = element_text(size = 20, hjust = 0.5),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18))+
+  theme_classic()+
+  scale_x_log10()
+
+autoencoder_fraudscore22_dataframe <- data.frame(cbind(record_id=row.names(autoencoder_fraudscore22),autoencoder_fraudscore22))
+autoencoder_fraudscore22_top20 <- autoencoder_fraudscore22_dataframe %>%
+  arrange(-autoencoder_fraudscore) %>%
+  slice(1:20)
+
+
+#overLap 
