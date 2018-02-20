@@ -1,0 +1,176 @@
+###### AUTOENCODER
+
+#There is a package called h2o for autoencoder ( deep learning)
+# learned from this demo : https://shiring.github.io/machine_learning/2017/05/01/fraud
+
+library(h2o)
+
+?h2o.init()
+
+local <- h2o.init()
+
+
+#Splitting the data into two sets: training set and test sets.
+#Checking how a pre trained model perform. 
+
+
+features  <- colnames(data_pca_scores2)
+localH2O <- h2o.init(ip = "localhost", port = 54321, startH2O = TRUE)
+
+train_unsupervised <-as.h2o(data_pca_scores2, destination_frame = "midata")
+
+
+model_autoencoder <-h2o.deeplearning(x = features, training_frame = train_unsupervised,
+                               autoencoder = TRUE,
+                               reproducible = F)
+                        
+
+
+model_autoencoder
+#getting each MSE of each records
+model_anon = h2o.anomaly(model_autoencoder, train_unsupervised, per_feature=F)
+
+model_anon_error <- as.data.frame(model_anon)
+#putting in the highest first (descending order of the error)
+
+names(model_anon_error)
+#plotting the 8 PCAs 
+
+ggplot(data = model_anon_error, aes(x = Reconstruction.MSE)) + 
+  geom_histogram(bins = 100, fill = "dodgerblue3" , col = "black") + 
+  scale_x_log10() +
+  scale_y_sqrt() + 
+  ggtitle("Distribution of MSE with Autoencoder")+
+  theme_classic()+
+  scale_y_continuous(breaks = seq(0,100000,20000))
+
+#Different visualization:
+
+model_anon1 = h2o.anomaly(model_autoencoder, train_unsupervised, per_feature=T)
+
+model_anon_error1 <- as.data.frame(model_anon1)
+
+plot(model_anon_error1$reconstr_RC2.SE)
+plot(model_anon_error1$reconstr_RC7.SE)
+plot(model_anon_error1$reconstr_RC8.SE)
+
+#Other visualization of autoencoder
+
+splits <- h2o.splitFrame(train_unsupervised, 
+                         ratios = c(0.4, 0.4), 
+                         seed = 42)
+
+train_unsupervised3  <- splits[[1]]
+train_supervised  <- splits[[2]]
+test <- splits[[3]]
+
+response <- "Class"
+features1 <- setdiff(colnames(train_unsupervised), response)
+
+
+model_nn <- h2o.deeplearning(x = features1,
+                             training_frame = train_unsupervised3,
+                             model_id = "model_nn",
+                             autoencoder = TRUE,
+                             reproducible = TRUE, #slow - turn off for real problems
+                             ignore_const_cols = FALSE,
+                             seed = 42,
+                             hidden = c(10, 2, 10), 
+                             epochs = 100,
+                             activation = "Tanh")
+
+library(RCurl)
+
+anomaly <- h2o.anomaly(model_nn, test) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column()
+
+
+mean_mse <- anomaly %>%
+  summarise(mean = mean(Reconstruction.MSE))
+
+
+#Visualizing differently
+ggplot(anomaly, aes(x = as.numeric(rowname), y = Reconstruction.MSE, col = "black")) +
+  geom_point(alpha = 0.3, col = "dodgerblue3") +
+  geom_hline(data = mean_mse, aes(yintercept = mean))+ 
+  labs(x = "instance number")+
+  scale_y_log10()+
+  theme_classic()
+
+
+# As we can see in the plot, there is no perfect classification into fraud and non-fraud cases 
+ #but the mean MSE is definitely higher for fraudulent transactions than for regular ones.
+
+# Explanation: 
+# An autoencoder is trying to learn a nonlinear, reduced representation of the original data.
+# It is an unsupervised approach, so it will only consider the features of the data. It is not an approach for classification.
+# The mean square error is a way to see how hard it is for the autoencoder to represent the output.
+# Anomalies are considered rows/observations with high mean squared error.
+# In our case, the rows with the highest MSE should be considered anomalous. 
+
+
+
+##### Calculing the fraud score number 2 
+
+
+
+#the fraud score is any measure of difference between the original input record and the autoencoder output record.
+
+#testing which formula 
+# https://cran.r-project.org/web/packages/autoencoder/autoencoder.pdf
+library(autoencoder)
+# Set up the autoencoder architecture:
+nl=3                          ## number of layers (default is 3: input, hidden, output)
+unit.type = "logistic"        ## specify the network unit type, i.e., the unit
+
+# activation function ("logistic" or "tanh")
+Nx.patch=10                   ## width of training image patches, in pixels
+Ny.patch=10                   ## height of training image patches, in pixels
+N.input = Nx.patch*Ny.patch  ## number of units (neurons) in the input layer (one unit per pixel)
+N.hidden = 5              ## number of units in the hidden layer CHANGE TO 10, 5
+lambda = 0.0002               ## weight decay parameter
+beta = 6                      ## weight of sparsity penalty term
+rho = 0.01                    ## desired sparsity parameter
+epsilon <- 0.001              ## a small parameter for initialization of weights
+# as small gaussian random numbers sampled from N(0,epsilon^2)
+max.iterations = 2000         ## number of iterations in optimizer  CHANGE TO #100
+
+data_pca_scores22 <- as.matrix(data_pca_scores2)
+
+autoencoder.object <- autoencode(X.train=data_pca_scores22,nl=nl,N.hidden=N.hidden,
+                                 unit.type=unit.type,lambda=lambda,beta=beta,rho=rho,epsilon=epsilon,
+                                 optim.method="BFGS",max.iterations=max.iterations,
+                                 rescale.flag=TRUE,rescaling.offset=0.001) #If you run, know that it will take a long time ( ~6-8hours)
+
+autoencoder_output <- predict(autoencoder.object, X.input=data_pca_scores22, hidden.output=FALSE)$X.output
+
+m = 2
+?predict()
+
+autoencoder_dist <- abs(autoencoder_output - data_pca_scores22)^m
+
+autoencoder_fraudscore <- apply(autoencoder_dist, 1, sum)^(1/m)
+
+autoencoder_fraudscore <- data.frame(autoencoder_fraudscore)
+
+summary(autoencoder_fraudscore)
+
+
+#rescaling it for range 0 to 1
+autoencoder_fraudscore2 <- (autoencoder_fraudscore - min(autoencoder_fraudscore)) / (max(autoencoder_fraudscore)  - min(autoencoder_fraudscore))
+
+
+summary(autoencoder_fraudscore2)
+ggplot(data = autoencoder_fraudscore2, aes(x = autoencoder_fraudscore2)) +
+  geom_histogram(bins = 100, fill = "dodgerblue3" , col = "black") +
+  ggtitle("Autoencoder Error: Fraud Score of Autoencoder") +
+  xlab("Fraud Score") +
+  ylab("count") +
+  theme(plot.title = element_text(size = 20, hjust = 0.5),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18))+
+  theme_classic()+
+  scale_x_log10()
+  
+ 
