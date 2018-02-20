@@ -22,6 +22,8 @@ ny_merge = read.csv("ny_property_merge.csv")
 
 data_pca_merge = ny_property_merge[,FALSE]
 
+
+
 data_pca_merge$Var1 = ny_property_merge$FULLVAL_BLDAREA / ny_property_merge$ZIP_FULLVAL_BLDAREA_MEAN
 data_pca_merge$Var2 = ny_property_merge$FULLVAL_BLDVOL / ny_property_merge$ZIP_FULLVAL_BLDVOL_MEAN
 data_pca_merge$Var3 = ny_property_merge$FULLVAL_LOTAREA / ny_property_merge$ZIP_FULLVAL_LOTAREA_MEAN
@@ -103,7 +105,7 @@ data_pca_merge$Var39 = ny_property_merge$AVLAND_BLDAREA / ny_property_merge$ALL_
 data_pca_merge$Var38 = ny_property_merge$AVLAND_LOTAREA / ny_property_merge$ALL_AVLAND_LOTAREA_MEAN  
 data_pca_merge$Var37 = ny_property_merge$AVLAND_BLDVOL / ny_property_merge$ALL_AVLAND_BLDVOL_MEAN  
 
-#More expert to reach a total of 51
+#More expert to reah a total of 51
 
 data_pca_merge$Var46 = ny_property_merge$FULLVAL/ny_property_merge$ZIP_FULLVAL_MEAN
 data_pca_merge$Var47 = ny_property_merge$AVTOT/ny_property_merge$ZIP_AVTOT_MEAN
@@ -112,13 +114,15 @@ data_pca_merge$Var49 = ny_property_merge$FULLVAL/ny_property_merge$BORO_FULLVAL_
 data_pca_merge$Var50 = ny_property_merge$AVTOT/ny_property_merge$BORO_AVTOT_MEAN
 data_pca_merge$Var51 = ny_property_merge$AVLAND/ny_property_merge$BORO_AVLAND_MEAN
 
-
 View(data_pca_merge)
 
 write.csv(data_pca_merge, 'data_pca_merge.csv')
 
 
-###Additional expert variables that we dont need (or may need later) :  cmd shift C
+###Additional expert variables that we dont need (or maybe need later) :  cmd shift C
+
+
+
 # Var4 = ny_merge$FULLVAL/ny_merge$TAXCLASS_FULLVAL_MEAN
 # Var5 = ny_merge$FULLVAL/ny_merge$ZIP3_FULLVAL_MEAN
 # Var4 = ny_merge$FULLVAL/ny_merge$BORO_FULLVAL_MEAN
@@ -185,7 +189,7 @@ write.csv(data_pca_merge, 'data_pca_merge.csv')
 
 str(data_pca_merge)
 
-data_pca_z = data_pca_merge1
+data_pca_z = data_pca_merge
 for ( i in 1:ncol(data_pca_z)) {
   mean_pca_z = mean(data_pca_z[,i])
   sd_pca_z = sd(data_pca_z[,i])
